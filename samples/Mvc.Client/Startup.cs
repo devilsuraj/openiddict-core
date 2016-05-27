@@ -32,7 +32,7 @@ namespace Mvc.Client {
                 // inserted in the database at the server level.
                 ClientId = "myClient",
                 ClientSecret = "secret_secret_secret",
-                PostLogoutRedirectUri = "http://localhost:53507/",
+                PostLogoutRedirectUri = "http://localhost:54540/",
 
                 RequireHttpsMetadata = false,
                 GetClaimsFromUserInfoEndpoint = true,

@@ -14,6 +14,9 @@ using Mvc.Server.Services;
 using NWebsec.AspNetCore.Middleware;
 using OpenIddict;
 using OpenIddict.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.AspNetCore.Http;
 
 namespace Mvc.Server {
     public class Startup {
@@ -22,6 +25,9 @@ namespace Mvc.Server {
                 .AddJsonFile("config.json")
                 .AddEnvironmentVariables()
                 .Build();
+            services.AddAuthentication(options => {
+                options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            });
 
             services.AddMvc();
 
@@ -43,6 +49,35 @@ namespace Mvc.Server {
             app.UseDeveloperExceptionPage();
 
             app.UseStaticFiles();
+            app.UseCookieAuthentication(new CookieAuthenticationOptions
+            {
+                AutomaticAuthenticate = true,
+                AutomaticChallenge = true,
+                LoginPath = new PathString("/signin")
+            });
+
+            app.UseOpenIdConnectAuthentication(new OpenIdConnectOptions
+            {
+                // Note: these settings must match the application details
+                // inserted in the database at the server level.
+                ClientId = "myClient",
+                ClientSecret = "secret_secret_secret",
+                PostLogoutRedirectUri = "/about",
+
+                RequireHttpsMetadata = false,
+                GetClaimsFromUserInfoEndpoint = true,
+                SaveTokens = true,
+
+                // Use the authorization code flow.
+                ResponseType = OpenIdConnectResponseTypes.Code,
+
+                // Note: setting the Authority allows the OIDC client middleware to automatically
+                // retrieve the identity provider's configuration and spare you from setting
+                // the different endpoints URIs or the token validation parameters explicitly.
+                Authority = "http://localhost:54540/",
+
+                Scope = { "email", "roles" }
+            });
 
             // Add a middleware used to validate access
             // tokens and protect the API endpoints.
@@ -137,8 +172,8 @@ namespace Mvc.Server {
                     context.Applications.Add(new Application {
                         Id = "myClient",
                         DisplayName = "My client application",
-                        RedirectUri = "http://localhost:53507/signin-oidc",
-                        LogoutRedirectUri = "http://localhost:53507/",
+                        RedirectUri = "http://localhost:54540/signin-oidc",
+                        LogoutRedirectUri = "http://localhost:54540/",
                         Secret = Crypto.HashPassword("secret_secret_secret"),
                         Type = OpenIddictConstants.ApplicationTypes.Confidential
                     });
